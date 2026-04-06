@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Props {
   options: string[];
@@ -10,9 +10,15 @@ interface Props {
   attemptNumber: number;
 }
 
-export function MultipleChoice({ options, wordId, onSubmit, hint }: Props) {
+export function MultipleChoice({ options, wordId, onSubmit, hint, attemptNumber }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
+  const [tried, setTried] = useState<Set<string>>(new Set());
   const [playing, setPlaying] = useState(false);
+
+  // Reset selection (but keep tried) when attempt changes
+  useEffect(() => {
+    setSelected(null);
+  }, [attemptNumber]);
 
   async function playAudio() {
     setPlaying(true);
@@ -34,6 +40,7 @@ export function MultipleChoice({ options, wordId, onSubmit, hint }: Props) {
 
   function handleSelect(option: string) {
     setSelected(option);
+    setTried((prev) => new Set(prev).add(option));
     onSubmit(option);
   }
 
@@ -63,11 +70,13 @@ export function MultipleChoice({ options, wordId, onSubmit, hint }: Props) {
           <button
             key={option}
             onClick={() => handleSelect(option)}
-            disabled={selected !== null}
+            disabled={selected !== null || tried.has(option)}
             className={`rounded-xl border-2 p-4 text-lg font-medium transition-all ${
-              selected === option
-                ? "border-blue-500 bg-blue-50"
-                : "border-gray-200 bg-white hover:border-gray-300 hover:shadow"
+              tried.has(option) && selected !== option
+                ? "border-gray-200 bg-gray-100 text-gray-400"
+                : selected === option
+                  ? "border-blue-500 bg-blue-50"
+                  : "border-gray-200 bg-white hover:border-gray-300 hover:shadow"
             }`}
           >
             {option}
