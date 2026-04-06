@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -142,15 +143,17 @@ export default function ChildrenPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {children.map((child) => (
-            <Card key={child.id}>
-              <CardHeader>
-                <CardTitle className="text-base">{child.username}</CardTitle>
-                <CardDescription>
-                  Created{" "}
-                  {new Date(child.createdAt).toLocaleDateString()}
-                </CardDescription>
-              </CardHeader>
-            </Card>
+            <Link key={child.id} href={`/dashboard/children/${child.id}`}>
+              <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                <CardHeader>
+                  <CardTitle className="text-base">{child.username}</CardTitle>
+                  <CardDescription>
+                    Created{" "}
+                    {new Date(child.createdAt).toLocaleDateString()}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
           ))}
         </div>
       )}
