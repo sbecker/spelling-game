@@ -57,13 +57,12 @@ export default function SignupPage() {
 
     setLoading(false);
 
-    if (result?.error) {
+    if (!result?.ok) {
       setError("Account created but login failed. Please try logging in.");
       return;
     }
 
-    router.push("/dashboard");
-    router.refresh();
+    window.location.href = "/dashboard";
   }
 
   return (

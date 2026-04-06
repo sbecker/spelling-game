@@ -36,13 +36,12 @@ export default function LoginPage() {
 
     setLoading(false);
 
-    if (result?.error) {
+    if (!result?.ok) {
       setError("Invalid username or password");
       return;
     }
 
-    router.push("/dashboard");
-    router.refresh();
+    window.location.href = "/dashboard";
   }
 
   return (
