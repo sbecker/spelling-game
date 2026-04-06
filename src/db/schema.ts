@@ -7,6 +7,7 @@ import {
   real,
   timestamp,
   unique,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
@@ -14,7 +15,7 @@ export const users = pgTable("users", {
   username: text("username").unique().notNull(),
   passwordHash: text("password_hash").notNull(),
   role: text("role", { enum: ["parent", "child"] }).notNull(),
-  parentId: uuid("parent_id").references(() => users.id),
+  parentId: uuid("parent_id").references((): AnyPgColumn => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

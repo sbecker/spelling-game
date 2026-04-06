@@ -36,32 +36,34 @@ async function seed() {
 
   // Create parent user (password: "parent123")
   const parentHash = await hash("parent123", 10);
-  const [parent] = await db
+  const parents = await db
     .insert(schema.users)
     .values({
       username: "parent",
       passwordHash: parentHash,
-      role: "parent",
+      role: "parent" as const,
     })
     .returning();
+  const parent = parents[0];
   console.log(`Created parent: ${parent.username} (id: ${parent.id})`);
 
   // Create child user (password: "child123")
   const childHash = await hash("child123", 10);
-  const [child] = await db
+  const children = await db
     .insert(schema.users)
     .values({
       username: "ash",
       passwordHash: childHash,
-      role: "child",
+      role: "child" as const,
       parentId: parent.id,
     })
     .returning();
+  const child = children[0];
   console.log(`Created child: ${child.username} (id: ${child.id})`);
 
   // Create built-in word lists
   for (const [listName, wordArray] of Object.entries(SECOND_GRADE_WORDS)) {
-    const [list] = await db
+    const lists = await db
       .insert(schema.wordLists)
       .values({
         name: listName,
@@ -69,6 +71,7 @@ async function seed() {
         isBuiltin: true,
       })
       .returning();
+    const list = lists[0];
 
     const wordRows = wordArray.map((word) => ({
       word,
@@ -80,7 +83,7 @@ async function seed() {
   }
 
   // Create a sample custom word list
-  const [customList] = await db
+  const customLists = await db
     .insert(schema.wordLists)
     .values({
       name: "Week 1 - Practice",
@@ -88,6 +91,7 @@ async function seed() {
       isBuiltin: false,
     })
     .returning();
+  const customList = customLists[0];
 
   const customWords = [
     "thought", "through", "caught", "brought", "enough",
