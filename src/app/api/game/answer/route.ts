@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/db";
-import { progress, sessionResults, words } from "@/db/schema";
+import { progress, sessionResults, words, gameProfiles } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { calculateNextReview, type ProgressState } from "@/lib/spaced-repetition";
+import { calculateXp, checkLevelUp, updateStreak, checkBadges, type GameState, type BadgeId } from "@/lib/gamification";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -104,11 +105,105 @@ export async function POST(request: Request) {
     }
   }
 
+  // Update gamification
+  let xpGained = 0;
+  let newLevel: number | undefined;
+  let leveledUp = false;
+  let newBadges: BadgeId[] = [];
+  let newStreak = 0;
+
+  const isFinalAttempt = correct || attemptNumber === 2;
+  if (isFinalAttempt) {
+    // Get or create game profile
+    let [profile] = await db
+      .select()
+      .from(gameProfiles)
+      .where(eq(gameProfiles.userId, session.user.id))
+      .limit(1);
+
+    if (!profile) {
+      const rows = await db
+        .insert(gameProfiles)
+        .values({ userId: session.user.id })
+        .returning();
+      profile = rows[0];
+    }
+
+    newStreak = updateStreak(profile.currentStreak, correct);
+    xpGained = calculateXp(correct, attemptNumber, profile.currentStreak);
+    const newTotalXp = profile.totalXp + xpGained;
+
+    const levelResult = checkLevelUp(newTotalXp, profile.totalXp);
+    newLevel = levelResult.level;
+    leveledUp = levelResult.leveledUp;
+
+    // Check daily streak
+    const now = new Date();
+    let dailyStreak = profile.dailyStreak;
+    if (profile.lastPlayedAt) {
+      const lastPlayed = new Date(profile.lastPlayedAt);
+      const daysDiff = Math.floor(
+        (now.getTime() - lastPlayed.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      if (daysDiff === 1) {
+        dailyStreak++;
+      } else if (daysDiff > 1) {
+        dailyStreak = 1;
+      }
+    } else {
+      dailyStreak = 1;
+    }
+
+    // Count mastered words (ease_factor >= 2.5 and correctCount >= 5)
+    const masteredWords = await db
+      .select()
+      .from(progress)
+      .where(eq(progress.userId, session.user.id));
+    const masteredCount = masteredWords.filter(
+      (p) => p.easeFactor >= 2.5 && p.correctCount >= 5
+    ).length;
+
+    const gameState: GameState = {
+      totalXp: newTotalXp,
+      level: newLevel,
+      currentStreak: newStreak,
+      dailyStreak,
+      masteredWordCount: masteredCount,
+      perfectSessions: 0, // TODO: track perfect sessions
+      completedLists: 0, // TODO: track completed lists
+      earnedBadges: (profile.earnedBadges || []) as BadgeId[],
+    };
+
+    newBadges = checkBadges(gameState);
+
+    await db
+      .update(gameProfiles)
+      .set({
+        totalXp: newTotalXp,
+        level: newLevel,
+        currentStreak: newStreak,
+        dailyStreak,
+        lastPlayedAt: now,
+        earnedBadges: [...(profile.earnedBadges || []), ...newBadges],
+      })
+      .where(eq(gameProfiles.id, profile.id));
+  }
+
   // Build response
   const response: Record<string, unknown> = {
     correct,
     correctAnswer: word.word,
+    xpGained,
+    streak: newStreak,
   };
+
+  if (leveledUp && newLevel) {
+    response.levelUp = newLevel;
+  }
+
+  if (newBadges.length > 0) {
+    response.newBadges = newBadges;
+  }
 
   // If wrong on first attempt, provide a hint
   if (!correct && attemptNumber === 1) {

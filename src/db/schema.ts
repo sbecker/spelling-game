@@ -7,6 +7,7 @@ import {
   real,
   timestamp,
   unique,
+  jsonb,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
@@ -85,4 +86,18 @@ export const sessionResults = pgTable("session_results", {
   }).notNull(),
   correct: boolean("correct").notNull(),
   attemptNumber: integer("attempt_number").notNull(),
+});
+
+export const gameProfiles = pgTable("game_profiles", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .references(() => users.id)
+    .unique()
+    .notNull(),
+  totalXp: integer("total_xp").default(0).notNull(),
+  level: integer("level").default(1).notNull(),
+  currentStreak: integer("current_streak").default(0).notNull(),
+  dailyStreak: integer("daily_streak").default(0).notNull(),
+  lastPlayedAt: timestamp("last_played_at"),
+  earnedBadges: jsonb("earned_badges").$type<string[]>().default([]).notNull(),
 });
