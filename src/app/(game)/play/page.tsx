@@ -314,6 +314,7 @@ function ExerciseRenderer({
     case "fill_in_the_blanks":
       return (
         <FillInTheBlanks
+          wordId={exercise.wordId}
           blanks={exercise.blanks!}
           onSubmit={onSubmit}
           hint={hint}
