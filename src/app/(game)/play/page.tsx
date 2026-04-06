@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { ListenAndType } from "@/components/exercises/listen-and-type";
 import { Unscramble } from "@/components/exercises/unscramble";
@@ -46,6 +46,18 @@ interface GameProfile {
 }
 
 export default function PlayPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-blue-50">
+        <p className="text-lg text-gray-600">Loading adventure...</p>
+      </div>
+    }>
+      <PlayContent />
+    </Suspense>
+  );
+}
+
+function PlayContent() {
   const searchParams = useSearchParams();
   const wordListId = searchParams.get("list");
 
