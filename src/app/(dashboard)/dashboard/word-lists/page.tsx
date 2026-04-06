@@ -32,7 +32,12 @@ export default function WordListsPage() {
   }
 
   useEffect(() => {
-    fetchLists();
+    fetch("/api/word-lists")
+      .then((r) => r.json())
+      .then((data) => {
+        setLists(data);
+        setLoading(false);
+      });
   }, []);
 
   async function handleDelete(id: string) {

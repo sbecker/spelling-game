@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/db";
 import { sessions, words, wordLists, progress } from "@/db/schema";
-import { eq, and, or, isNull, lte, sql } from "drizzle-orm";
+import { eq, and, or } from "drizzle-orm";
 import { selectDueWords, getMasteryTier } from "@/lib/spaced-repetition";
 import { selectExerciseType, generateScrambledLetters, generateBlanks, generateMisspellings } from "@/lib/exercise-engine";
 
@@ -86,7 +86,6 @@ export async function GET(request: Request) {
   }
 
   // Get progress for these words
-  const wordIds = availableWords.map((w) => w.id);
   const progressRows = await db
     .select()
     .from(progress)

@@ -45,7 +45,12 @@ export default function ChildrenPage() {
   }
 
   useEffect(() => {
-    fetchChildren();
+    fetch("/api/children")
+      .then((r) => r.json())
+      .then((data) => {
+        setChildren(data);
+        setLoading(false);
+      });
   }, []);
 
   async function handleCreate(e: React.FormEvent) {

@@ -66,17 +66,6 @@ export default function PlayPage() {
       .then(setProfile);
   }, []);
 
-  const startSession = useCallback(async () => {
-    const res = await fetch("/api/game/session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ wordListId }),
-    });
-    const data = await res.json();
-    setSessionId(data.id);
-    return data.id;
-  }, [wordListId]);
-
   const fetchExercise = useCallback(
     async (sid: string) => {
       setLoading(true);
@@ -95,8 +84,18 @@ export default function PlayPage() {
   );
 
   useEffect(() => {
-    startSession().then((sid) => fetchExercise(sid));
-  }, [startSession, fetchExercise]);
+    (async () => {
+      const res = await fetch("/api/game/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wordListId }),
+      });
+      const data = await res.json();
+      setSessionId(data.id);
+      await fetchExercise(data.id);
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function submitAnswer(answer: string) {
     if (!sessionId || !exercise) return;

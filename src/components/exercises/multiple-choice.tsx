@@ -10,7 +10,7 @@ interface Props {
   attemptNumber: number;
 }
 
-export function MultipleChoice({ options, wordId, onSubmit, hint, attemptNumber }: Props) {
+export function MultipleChoice({ options, wordId, onSubmit, hint }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
 
