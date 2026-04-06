@@ -41,7 +41,15 @@ export default function LoginPage() {
       return;
     }
 
-    window.location.href = "/dashboard";
+    // Fetch session to determine role-based redirect
+    const sessionRes = await fetch("/api/auth/session");
+    const session = await sessionRes.json();
+
+    if (session?.user?.role === "child") {
+      window.location.href = "/play";
+    } else {
+      window.location.href = "/dashboard";
+    }
   }
 
   return (
